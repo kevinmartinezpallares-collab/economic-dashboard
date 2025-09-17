@@ -1,11 +1,10 @@
 # Macro Bot
 Dashboard y bot de Discord para noticias macroeconómicas y calendario económico.
 
-## Licencia
-Este proyecto está bajo la [Licencia MIT](LICENSE).
-
 ## Estructura
 - `/web`: Dashboard web (HTML/CSS/JS) para visualizar noticias, calendario, reportes, y configurar RSS/prompts.
+  - `index.html`: Interfaz principal.
+  - `config.json`: Configuraciones (RSS, prompts, filtros).
 - `/bot` (futuro): Bot de Discord (Python) para alertas en tiempo real.
 
 ## Setup
