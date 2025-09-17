@@ -1,6 +1,51 @@
 {
-  "rss": ["https://www.reuters.com/rss/business"],
+  "apiKeys": {
+    "finnhub": "",
+    "newsapi": "",
+    "openai": ""
+  },
+  "rssUrls": [
+    "https://feeds.reuters.com/reuters/businessNews",
+    "https://feeds.bloomberg.com/markets/news",
+    "https://rss.cnn.com/rss/money_latest.rss",
+    "https://feeds.finance.yahoo.com/rss/2.0/headline",
+    "https://www.ft.com/rss/home/us"
+  ],
   "prompts": {
-    "news": "Analiza el impacto macroeconómico en 3 puntos clave"
+    "news": "Analiza el impacto macroeconómico de esta noticia en 3 puntos clave: 1) Efecto en mercados financieros, 2) Implicaciones para política monetaria, 3) Sectores más afectados. Responde en máximo 100 palabras.",
+    "events": "Analiza el impacto de este resultado económico considerando: 1) Desviación vs expectativas, 2) Efecto en la moneda local, 3) Implicaciones para próximas decisiones de política monetaria. Máximo 80 palabras."
+  },
+  "settings": {
+    "refreshInterval": 300000,
+    "maxNewsItems": 20,
+    "maxLogEntries": 50,
+    "theme": "light",
+    "language": "es",
+    "timezone": "Europe/Madrid"
+  },
+  "filters": {
+    "keywords": [
+      "inflación",
+      "PIB",
+      "empleo",
+      "tipos de interés",
+      "banco central",
+      "Fed",
+      "BCE",
+      "política monetaria",
+      "mercados",
+      "economía"
+    ],
+    "excludeKeywords": [
+      "deportes",
+      "entretenimiento",
+      "celebridades"
+    ],
+    "minImpactLevel": "medium"
+  },
+  "notifications": {
+    "enabled": false,
+    "highImpactOnly": true,
+    "soundEnabled": false
   }
 }
