@@ -1,1 +1,6 @@
-
+{
+  "rss": ["https://www.reuters.com/rss/business"],
+  "prompts": {
+    "news": "Analiza el impacto macroeconómico en 3 puntos clave"
+  }
+}
