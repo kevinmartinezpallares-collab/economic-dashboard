@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Macroeconómico - Liquid Glass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f1f3f4 100%);
+            min-height: 100vh;
+            color: #2d3748;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Liquid Glass Effects */
+        .glass {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.25) 0%, 
+                rgba(255, 255, 255, 0.1) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.4), 
+                transparent);
+            transition: left 0.6s ease;
+        }
+
+        .glass:hover::before {
+            left: 100%;
+        }
+
+        .glass-card {
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.3) 0%, 
+                rgba(255, 255, 255, 0.15) 100%);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.3), 
+                transparent);
+            transition: left 0.5s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.4) 0%, 
+                rgba(255, 255, 255, 0.2) 100%);
+        }
+
+        .glass-card:hover::before {
+            left: 100%;
+        }
+
+        /* Header */
+        .header {
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #4a5568;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 0 1rem;
+        }
+
+        .nav-tab {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            color: #4a5568;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.4), 
+                transparent);
+            transition: left 0.4s ease;
+        }
+
+        .nav-tab:hover, .nav-tab.active {
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            color: #2d3748;
+        }
+
+        .nav-tab:hover::before, .nav-tab.active::before {
+            left: 100%;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* News Section */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .news-card {
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .news-card.high-impact {
+            border: 2px solid #ef4444;
+            background: linear-gradient(135deg, 
+                rgba(239, 68, 68, 0.1) 0%, 
+                rgba(255, 255, 255, 0.2) 100%);
+        }
+
+        .news-card.high-impact::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-top: 20px solid #ef4444;
+        }
+
+        .news-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        .news-summary {
+            margin-bottom: 1rem;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .ai-analysis {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid #3b82f6;
+            padding: 0.8rem;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #374151;
+        }
+
+        [data-theme="dark"] .ai-analysis {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 3px solid #60a5fa;
+            color: #e2e8f0;
+        }
+
+        /* Calendar Section */
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .calendar-table th,
+        .calendar-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .calendar-table th {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+            color: #2d3748;
+            backdrop-filter: blur(5px);
+        }
+
+        .impact-high {
+            color: #ef4444 !important;
+            font-weight: bold;
+        }
+
+        .impact-medium {
+            color: #f59e0b !important;
+            font-weight: bold;
+        }
+
+        .impact-low {
+            color: #10b981 !important;
+            font-weight: bold;
+        }
+
+        /* Reports Section */
+        .reports-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .report-card {
+            padding: 2rem;
+        }
+
+        .report-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .report-content {
+            line-height: 1.8;
+            color: #4a5568;
+        }
+
+        .report-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .report-content li {
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .report-content li::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+        }
+
+        /* Configuration Section */
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .config-card {
+            padding: 2rem;
+        }
+
+        .config-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #2d3748;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: #2d3748;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0.5rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.3), 
+                transparent);
+            transition: left 0.4s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: #1e40af;
+        }
+
+        .btn-primary:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Logs Section */
+        .logs-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+        }
+
+        .log-entry:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateX(4px);
+        }
+
+        .log-timestamp {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .log-error {
+            border-left: 3px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .log-success {
+            border-left: 3px solid #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .status-indicator::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .status-indicator:hover {
+            transform: scale(1.3);
+        }
+
+        .status-indicator:hover::before {
+            opacity: 0.3;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-online {
+            background: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .status-online::before {
+            background: #10b981;
+        }
+
+        .status-offline {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+        }
+
+        .status-offline::before {
+            background: #ef4444;
+        }
+
+        .status-warning {
+            background: #f59e0b;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+        }
+
+        .status-warning::before {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.1;
+            }
+            100% {
+                transform: scale(1.4);
+                opacity: 0;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Dark Theme Variables */
+        :root {
+            --bg-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f1f3f4 100%);
+            --bg-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%);
+            --bg-glass-card: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.15) 100%);
+            --bg-glass-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.2) 100%);
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --text-muted: #6b7280;
+            --border-glass: rgba(255, 255, 255, 0.3);
+            --border-glass-card: rgba(255, 255, 255, 0.25);
+            --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --shadow-glass-card: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --backdrop-blur: blur(20px);
+            --backdrop-blur-card: blur(15px);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            --bg-glass: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+            --bg-glass-card: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(51, 65, 85, 0.7) 100%);
+            --bg-glass-hover: linear-gradient(135deg, rgba(51, 65, 85, 0.9) 0%, rgba(71, 85, 105, 0.8) 100%);
+            --text-primary: #f8fafc;
+            --text-secondary: #e2e8f0;
+            --text-muted: #cbd5e1;
+            --border-glass: rgba(148, 163, 184, 0.3);
+            --border-glass-card: rgba(148, 163, 184, 0.25);
+            --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --shadow-glass-card: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --backdrop-blur: blur(25px);
+            --backdrop-blur-card: blur(20px);
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] body::before {
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            backdrop-filter: var(--backdrop-blur);
+            box-shadow: var(--shadow-glass-card);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(180deg);
+            background: var(--bg-glass-hover);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Collapsible Sections */
+        .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-glass-card);
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-header:hover {
+            color: #3b82f6;
+            transform: translateX(4px);
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .collapsible-content.collapsed .collapsible-icon {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-body {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        .collapsible-content.collapsed .collapsible-body {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        /* Updated Glass Effects with CSS Variables */
+        .glass {
+            background: var(--bg-glass);
+            backdrop-filter: var(--backdrop-blur);
+            border: 1px solid var(--border-glass);
+            box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .glass-card {
+            background: var(--bg-glass-card);
+            backdrop-filter: var(--backdrop-blur-card);
+            border: 1px solid var(--border-glass-card);
+            box-shadow: var(--shadow-glass-card), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .glass-card:hover {
+            background: var(--bg-glass-hover);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        /* Updated Text Colors */
+        .header h1 {
+            color: var(--text-primary);
+        }
+
+        .header p {
+            color: var(--text-secondary);
+        }
+
+        .nav-tab {
+            background: var(--bg-glass-card);
+            border: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+            backdrop-filter: var(--backdrop-blur-card);
+        }
+
+        .nav-tab:hover, .nav-tab.active {
+            background: var(--bg-glass-hover);
+            border-color: var(--border-glass);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .nav-tab {
+            background: rgba(51, 65, 85, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #cbd5e1;
+        }
+
+        [data-theme="dark"] .nav-tab:hover, [data-theme="dark"] .nav-tab.active {
+            background: rgba(71, 85, 105, 0.9);
+            border-color: rgba(148, 163, 184, 0.4);
+            color: #f8fafc;
+        }
+
+        .news-title, .report-title, .config-title, .section-title {
+            color: var(--text-primary);
+        }
+
+        .news-summary, .report-content {
+            color: var(--text-secondary);
+        }
+
+        .news-meta {
+            color: var(--text-muted);
+        }
+
+        .form-label {
+            color: var(--text-primary);
+        }
+
+        .form-input, .form-textarea {
+            background: var(--bg-glass-card);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            backdrop-filter: var(--backdrop-blur-card);
+        }
+
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: var(--text-muted);
+            opacity: 0.8;
+        }
+
+        [data-theme="dark"] .form-input, [data-theme="dark"] .form-textarea {
+            background: rgba(51, 65, 85, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #f8fafc;
+        }
+
+        [data-theme="dark"] .form-input:focus, [data-theme="dark"] .form-textarea:focus {
+            background: rgba(71, 85, 105, 0.9);
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+        }
+
+        .btn {
+            background: var(--bg-glass-card);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            backdrop-filter: var(--backdrop-blur-card);
+        }
+
+        .btn:hover {
+            background: var(--bg-glass-hover);
+        }
+
+        .calendar-table {
+            background: var(--bg-glass-card);
+            border: 1px solid var(--border-glass-card);
+            color: var(--text-primary);
+        }
+
+        .calendar-table th {
+            background: var(--bg-glass-hover);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .calendar-table {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+
+        [data-theme="dark"] .calendar-table th {
+            background: rgba(51, 65, 85, 0.9);
+            color: #f8fafc;
+        }
+
+        [data-theme="dark"] .calendar-table td {
+            color: #e2e8f0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .logs-container {
+            background: var(--bg-glass-card);
+            border: 1px solid var(--border-glass-card);
+            color: var(--text-primary);
+        }
+
+        .log-entry {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .logs-container {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+
+        [data-theme="dark"] .log-entry {
+            background: rgba(51, 65, 85, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #f8fafc;
+        }
+
+        [data-theme="dark"] .log-timestamp {
+            color: #60a5fa;
+        }
+
+        [data-theme="dark"] .btn {
+            background: rgba(51, 65, 85, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #f8fafc;
+        }
+
+        [data-theme="dark"] .btn:hover {
+            background: rgba(71, 85, 105, 0.9);
+            color: #f8fafc;
+        }
+
+        .refresh-btn {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            backdrop-filter: var(--backdrop-blur);
+        }
+
+        .refresh-btn:hover {
+            background: var(--bg-glass-hover);
+        }
+
+        /* Enhanced Responsive Design */
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 100%;
+                padding: 0 1.5rem;
+            }
+            
+            .news-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+                padding: 0 1rem;
+            }
+
+            .nav-tab {
+                text-align: center;
+                padding: 1rem;
+            }
+
+            .news-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .config-grid,
+            .reports-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .calendar-table {
+                font-size: 0.8rem;
+            }
+
+            .calendar-table th,
+            .calendar-table td {
+                padding: 0.5rem 0.25rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                margin: 0.25rem 0;
+            }
+
+            .theme-toggle {
+                top: 1rem;
+                right: 1rem;
+                width: 45px;
+                height: 45px;
+            }
+
+            .refresh-btn {
+                bottom: 1rem;
+                right: 1rem;
+                width: 50px;
+                height: 50px;
+            }
+
+            .glass, .glass-card {
+                margin: 0.5rem 0;
+            }
+
+            .news-card, .report-card, .config-card {
+                padding: 1rem;
+            }
+
+            .logs-container {
+                padding: 1rem;
+                max-height: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            .header {
+                padding: 1rem 0.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .nav-tabs {
+                padding: 0 0.5rem;
+            }
+
+            .calendar-table {
+                font-size: 0.7rem;
+            }
+
+            .calendar-table th,
+            .calendar-table td {
+                padding: 0.25rem;
+            }
+
+            .form-input, .form-textarea {
+                padding: 0.6rem;
+            }
+
+            .btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Smooth Animations */
+        * {
+            transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .glass, .glass-card, .nav-tab, .btn, .form-input, .form-textarea {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Hover Animations */
+        .news-card:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .report-card:hover, .config-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        .nav-tab:hover {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        /* Mobile Touch Animations */
+        @media (hover: none) and (pointer: coarse) {
+            .glass-card:active {
+                transform: scale(0.98);
+            }
+
+            .btn:active {
+                transform: scale(0.95);
+            }
+
+            .nav-tab:active {
+                transform: scale(0.98);
+            }
+        }
+
+        /* Scrollbar Dark Theme */
+        [data-theme="dark"] ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+
+        /* Section Titles */
+        .section-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .section-title {
+            color: #f8fafc;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Action Buttons Container */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        /* Floating refresh button */
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #2d3748;
+            font-size: 1.5rem;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1) rotate(180deg);
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            backdrop-filter: blur(10px);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+        <span id="theme-icon">🌙</span>
+    </button>
+
+    <!-- Header -->
+    <div class="header glass">
+        <h1>Dashboard Macroeconómico</h1>
+        <p>Análisis en tiempo real de noticias y eventos económicos</p>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-tabs">
+        <div class="nav-tab active" onclick="showSection('news')">
+            <span class="status-indicator status-online"></span>
+            Noticias en Tiempo Real
+        </div>
+        <div class="nav-tab" onclick="showSection('calendar')">
+            <span class="status-indicator status-online"></span>
+            Calendario Económico
+        </div>
+        <div class="nav-tab" onclick="showSection('reports')">
+            <span class="status-indicator status-warning"></span>
+            Reportes
+        </div>
+        <div class="nav-tab" onclick="showSection('config')">
+            <span class="status-indicator status-offline"></span>
+            Configuración
+        </div>
+        <div class="nav-tab" onclick="showSection('logs')">
+            <span class="status-indicator status-online"></span>
+            Logs
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- News Section -->
+        <div id="news" class="section active">
+            <div class="glass" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 class="section-title">📈 Noticias Macroeconómicas</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="refreshNews()">
+                        <span id="news-loading"></span>
+                        Actualizar Noticias
+                    </button>
+                </div>
+            </div>
+            <div id="news-container" class="news-grid">
+                <!-- News cards will be populated here -->
+            </div>
+        </div>
+
+        <!-- Calendar Section -->
+        <div id="calendar" class="section">
+            <div class="glass" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 class="section-title">📅 Calendario Económico</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="refreshCalendar()">
+                        <span id="calendar-loading"></span>
+                        Actualizar Calendario
+                    </button>
+                </div>
+            </div>
+            <div class="glass" style="padding: 2rem;">
+                <table id="calendar-table" class="calendar-table">
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Fecha/Hora</th>
+                            <th>Impacto</th>
+                            <th>Esperado</th>
+                            <th>Actual</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calendar-body">
+                        <!-- Calendar events will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports" class="section">
+            <div class="glass" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 class="section-title">📊 Reportes Económicos</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="generateReports()">
+                        <span id="reports-loading"></span>
+                        Generar Reportes
+                    </button>
+                </div>
+            </div>
+            <div class="reports-container">
+                <div class="glass-card report-card">
+                    <div class="report-title">📈 Reporte Diario</div>
+                    <div id="daily-report" class="report-content">
+                        <p>Cargando reporte diario...</p>
+                    </div>
+                </div>
+                <div class="glass-card report-card">
+                    <div class="report-title">📅 Reporte Semanal</div>
+                    <div id="weekly-report" class="report-content">
+                        <p>Cargando reporte semanal...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div id="config" class="section">
+            <div class="glass" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 class="section-title">⚙️ Configuración</h2>
+                <p style="text-align: center; color: var(--text-secondary);">Configura las APIs y parámetros del dashboard</p>
+            </div>
+            <div class="config-grid">
+                <div class="glass-card config-card">
+                    <div class="collapsible-content" id="api-keys-section">
+                        <div class="collapsible-header" onclick="toggleCollapsible('api-keys-section')">
+                            <span class="config-title">🔑 API Keys</span>
+                            <span class="collapsible-icon">🔽</span>
+                        </div>
+                        <div class="collapsible-body">
+                            <div class="form-group">
+                                <label class="form-label">Finnhub API Key:</label>
+                                <input type="password" id="finnhub-key" class="form-input" placeholder="Ingresa tu API key de Finnhub">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">NewsAPI Key:</label>
+                                <input type="password" id="newsapi-key" class="form-input" placeholder="Ingresa tu API key de NewsAPI">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">OpenAI API Key:</label>
+                                <input type="password" id="openai-key" class="form-input" placeholder="Ingresa tu API key de OpenAI">
+                            </div>
+                            <button class="btn btn-primary" onclick="saveApiKeys()">Guardar API Keys</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card config-card">
+                    <div class="collapsible-content" id="rss-section">
+                        <div class="collapsible-header" onclick="toggleCollapsible('rss-section')">
+                            <span class="config-title">📰 Fuentes RSS</span>
+                            <span class="collapsible-icon">🔽</span>
+                        </div>
+                        <div class="collapsible-body">
+                            <div class="form-group">
+                                <label class="form-label">URLs RSS (una por línea):</label>
+                                <textarea id="rss-urls" class="form-textarea" placeholder="https://feeds.reuters.com/reuters/businessNews&#10;https://feeds.bloomberg.com/markets/news"></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="saveRssUrls()">Guardar URLs</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card config-card">
+                    <div class="collapsible-content" id="prompts-section">
+                        <div class="collapsible-header" onclick="toggleCollapsible('prompts-section')">
+                            <span class="config-title">🤖 Prompts de IA</span>
+                            <span class="collapsible-icon">🔽</span>
+                        </div>
+                        <div class="collapsible-body">
+                            <div class="form-group">
+                                <label class="form-label">Prompt para Análisis de Noticias:</label>
+                                <textarea id="news-prompt" class="form-textarea" placeholder="Analiza el impacto macroeconómico de esta noticia en 3 puntos clave"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Prompt para Eventos Económicos:</label>
+                                <textarea id="events-prompt" class="form-textarea" placeholder="Analiza el impacto de este resultado en mercados"></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="savePrompts()">Guardar Prompts</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card config-card">
+                    <div class="collapsible-content" id="export-section">
+                        <div class="collapsible-header" onclick="toggleCollapsible('export-section')">
+                            <span class="config-title">💾 Exportar/Importar</span>
+                            <span class="collapsible-icon">🔽</span>
+                        </div>
+                        <div class="collapsible-body">
+                            <div class="form-group">
+                                <button class="btn" onclick="exportConfig()">📥 Exportar config.json</button>
+                                <button class="btn" onclick="importConfig()">📤 Importar Configuración</button>
+                                <input type="file" id="config-file" accept=".json" style="display: none;" onchange="handleConfigImport(event)">
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-danger" onclick="resetConfig()">🔄 Resetear Configuración</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Section -->
+        <div id="logs" class="section">
+            <div class="glass" style="padding: 2rem; margin-bottom: 2rem;">
+                <h2 class="section-title">📋 Logs del Sistema</h2>
+                <div class="action-buttons">
+                    <button class="btn" onclick="clearLogs()">Limpiar Logs</button>
+                    <button class="btn" onclick="exportLogs()">📥 Exportar logs.txt</button>
+                </div>
+            </div>
+            <div class="glass logs-container">
+                <div id="logs-container">
+                    <!-- Logs will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refresh Button -->
+    <button class="refresh-btn" onclick="refreshCurrentSection()" title="Actualizar sección actual">
+        🔄
+    </button>
+
+    <script>
+        // Global variables
+        let currentSection = 'news';
+        let config = {
+            apiKeys: {
+                finnhub: '',
+                newsapi: '',
+                openai: ''
+            },
+            rssUrls: [
+                'https://feeds.reuters.com/reuters/businessNews',
+                'https://feeds.bloomberg.com/markets/news'
+            ],
+            prompts: {
+                news: 'Analiza el impacto macroeconómico de esta noticia en 3 puntos clave',
+                events: 'Analiza el impacto de este resultado en mercados'
+            }
+        };
+
+        // Mock data for demonstration
+        const mockNews = [
+            {
+                title: "Fed mantiene tasas de interés sin cambios",
+                summary: "La Reserva Federal decidió mantener las tasas de interés en el rango actual de 5.25%-5.50%, citando preocupaciones sobre la inflación persistente.",
+                source: "Reuters",
+                publishedAt: "2024-01-15T14:30:00Z",
+                url: "https://example.com/news1",
+                aiAnalysis: "AI: Impacto neutral en USD a corto plazo. Mercados esperaban esta decisión. Atención en próximas declaraciones de Powell.",
+                highImpact: true
+            },
+            {
+                title: "Inflación en Eurozona supera expectativas",
+                summary: "Los datos de inflación de diciembre muestran un aumento del 2.9% interanual, superando las expectativas del 2.7%.",
+                source: "Bloomberg",
+                publishedAt: "2024-01-15T12:00:00Z",
+                url: "https://example.com/news2",
+                aiAnalysis: "AI: Presión alcista en EUR. BCE podría reconsiderar política monetaria. Sectores energéticos bajo presión.",
+                highImpact: true
+            },
+            {
+                title: "PIB de China crece 5.2% en 2023",
+                summary: "La economía china logró su objetivo de crecimiento del 5% para 2023, impulsada por el consumo interno y las exportaciones.",
+                source: "Financial Times",
+                publishedAt: "2024-01-15T10:15:00Z",
+                url: "https://example.com/news3",
+                aiAnalysis: "AI: Fortaleza en commodities. Impacto positivo en mercados emergentes. Atención a políticas de estímulo 2024.",
+                highImpact: false
+            }
+        ];
+
+        const mockCalendar = [
+            {
+                event: "Decisión de Tasas Fed",
+                time: "2024-01-17T19:00:00Z",
+                impact: "high",
+                expected: "5.50%",
+                actual: ""
+            },
+            {
+                event: "IPC Estados Unidos",
+                time: "2024-01-18T13:30:00Z",
+                impact: "high",
+                expected: "3.2%",
+                actual: ""
+            },
+            {
+                event: "PMI Manufacturero Eurozona",
+                time: "2024-01-19T09:00:00Z",
+                impact: "medium",
+                expected: "47.2",
+                actual: "47.9"
+            },
+            {
+                event: "Ventas Minoristas Reino Unido",
+                time: "2024-01-20T09:30:00Z",
+                impact: "low",
+                expected: "0.3%",
+                actual: ""
+            }
+        ];
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            loadConfig();
+            loadLogs();
+            refreshNews();
+            refreshCalendar();
+            generateReports();
+            addLog('Sistema iniciado correctamente', 'success');
+        });
+
+        // Theme functions
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('economicDashboardTheme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('economicDashboardTheme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            addLog(`Tema cambiado a ${newTheme === 'dark' ? 'oscuro' : 'claro'}`, 'success');
+        }
+
+        function updateThemeIcon(theme) {
+            const themeIcon = document.getElementById('theme-icon');
+            themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        // Collapsible functions
+        function toggleCollapsible(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('collapsed');
+            
+            const isCollapsed = section.classList.contains('collapsed');
+            addLog(`Sección ${sectionId} ${isCollapsed ? 'contraída' : 'expandida'}`, 'info');
+        }
+
+        // Navigation functions
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Add active class to selected tab
+            event.target.classList.add('active');
+            
+            currentSection = sectionName;
+        }
+
+        // News functions
+        function refreshNews() {
+            const loadingSpan = document.getElementById('news-loading');
+            loadingSpan.innerHTML = '<span class="loading"></span>';
+            
+            addLog('Actualizando noticias...', 'info');
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                displayNews(mockNews);
+                loadingSpan.innerHTML = '';
+                addLog('Noticias actualizadas correctamente', 'success');
+            }, 2000);
+        }
+
+        function displayNews(newsData) {
+            const container = document.getElementById('news-container');
+            container.innerHTML = '';
+            
+            newsData.forEach(news => {
+                const newsCard = document.createElement('div');
+                newsCard.className = `glass-card news-card ${news.highImpact ? 'high-impact' : ''}`;
+                
+                const publishedDate = new Date(news.publishedAt).toLocaleString('es-ES');
+                
+                newsCard.innerHTML = `
+                    <div class="news-title">${news.title}</div>
+                    <div class="news-meta">
+                        <span>📰 ${news.source}</span>
+                        <span>🕒 ${publishedDate}</span>
+                    </div>
+                    <div class="news-summary">${news.summary}</div>
+                    <div class="ai-analysis">
+                        🤖 ${news.aiAnalysis}
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <a href="${news.url}" target="_blank" class="btn" style="text-decoration: none; display: inline-block;">
+                            Leer más 🔗
+                        </a>
+                    </div>
+                `;
+                
+                container.appendChild(newsCard);
+            });
+        }
+
+        // Calendar functions
+        function refreshCalendar() {
+            const loadingSpan = document.getElementById('calendar-loading');
+            loadingSpan.innerHTML = '<span class="loading"></span>';
+            
+            addLog('Actualizando calendario económico...', 'info');
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                displayCalendar(mockCalendar);
+                loadingSpan.innerHTML = '';
+                addLog('Calendario actualizado correctamente', 'success');
+            }, 1500);
+        }
+
+        function displayCalendar(calendarData) {
+            const tbody = document.getElementById('calendar-body');
+            tbody.innerHTML = '';
+            
+            calendarData.forEach(event => {
+                const row = document.createElement('tr');
+                
+                const eventTime = new Date(event.time).toLocaleString('es-ES');
+                const impactConfig = {
+                    'high': { class: 'status-offline', text: 'Alto' },
+                    'medium': { class: 'status-warning', text: 'Medio' },
+                    'low': { class: 'status-online', text: 'Bajo' }
+                }[event.impact];
+                
+                row.innerHTML = `
+                    <td><strong>${event.event}</strong></td>
+                    <td>${eventTime}</td>
+                    <td class="impact-${event.impact}">
+                        <span class="status-indicator ${impactConfig.class}" title="Impacto ${impactConfig.text}"></span>
+                        ${impactConfig.text}
+                    </td>
+                    <td>${event.expected}</td>
+                    <td>${event.actual || '⏳ Pendiente'}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Reports functions
+        function generateReports() {
+            const loadingSpan = document.getElementById('reports-loading');
+            loadingSpan.innerHTML = '<span class="loading"></span>';
+            
+            addLog('Generando reportes...', 'info');
+            
+            // Simulate AI analysis delay
+            setTimeout(() => {
+                generateDailyReport();
+                generateWeeklyReport();
+                loadingSpan.innerHTML = '';
+                addLog('Reportes generados correctamente', 'success');
+            }, 3000);
+        }
+
+        function generateDailyReport() {
+            const dailyReport = document.getElementById('daily-report');
+            const today = new Date().toLocaleDateString('es-ES');
+            
+            dailyReport.innerHTML = `
+                <p><strong>📅 Reporte del ${today}</strong></p>
+                <ul>
+                    <li><strong>Fed mantiene tasas:</strong> Decisión esperada que mantiene estabilidad en mercados de renta fija.</li>
+                    <li><strong>Inflación Eurozona:</strong> Dato superior a expectativas genera presión en bonos europeos.</li>
+                    <li><strong>Fortaleza del dólar:</strong> USD se mantiene fuerte ante datos mixtos globales.</li>
+                    <li><strong>Commodities:</strong> Oro estable, petróleo con leve alza por tensiones geopolíticas.</li>
+                </ul>
+                <p><em>🤖 Análisis generado por IA basado en noticias del día</em></p>
+            `;
+        }
+
+        function generateWeeklyReport() {
+            const weeklyReport = document.getElementById('weekly-report');
+            const weekStart = new Date();
+            weekStart.setDate(weekStart.getDate() - 7);
+            
+            weeklyReport.innerHTML = `
+                <p><strong>📊 Resumen Semanal (${weekStart.toLocaleDateString('es-ES')} - ${new Date().toLocaleDateString('es-ES')})</strong></p>
+                <ul>
+                    <li><strong>Política Monetaria:</strong> Bancos centrales mantienen postura cautelosa ante datos inflacionarios mixtos.</li>
+                    <li><strong>Crecimiento Global:</strong> Señales de desaceleración en Europa, estabilidad en EEUU.</li>
+                    <li><strong>Mercados Emergentes:</strong> Flujos positivos hacia Asia, cautela en Latinoamérica.</li>
+                    <li><strong>Sectores Destacados:</strong> Tecnología resiliente, energía volátil por factores geopolíticos.</li>
+                    <li><strong>Outlook:</strong> Semana próxima clave con datos de empleo EEUU y decisiones BCE.</li>
+                </ul>
+                <p><em>🤖 Resumen semanal generado por IA</em></p>
+            `;
+        }
+
+        // Configuration functions
+        function loadConfig() {
+            const savedConfig = localStorage.getItem('economicDashboardConfig');
+            if (savedConfig) {
+                config = { ...config, ...JSON.parse(savedConfig) };
+                
+                // Populate form fields
+                document.getElementById('finnhub-key').value = config.apiKeys.finnhub;
+                document.getElementById('newsapi-key').value = config.apiKeys.newsapi;
+                document.getElementById('openai-key').value = config.apiKeys.openai;
+                document.getElementById('rss-urls').value = config.rssUrls.join('\n');
+                document.getElementById('news-prompt').value = config.prompts.news;
+                document.getElementById('events-prompt').value = config.prompts.events;
+            }
+        }
+
+        function saveApiKeys() {
+            config.apiKeys.finnhub = document.getElementById('finnhub-key').value;
+            config.apiKeys.newsapi = document.getElementById('newsapi-key').value;
+            config.apiKeys.openai = document.getElementById('openai-key').value;
+            
+            localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
+            addLog('API Keys guardadas correctamente', 'success');
+            
+            // Show success feedback
+            alert('✅ API Keys guardadas correctamente');
+        }
+
+        function saveRssUrls() {
+            const urls = document.getElementById('rss-urls').value.split('\n').filter(url => url.trim());
+            config.rssUrls = urls;
+            
+            localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
+            addLog(`${urls.length} URLs RSS guardadas`, 'success');
+            
+            alert('✅ URLs RSS guardadas correctamente');
+        }
+
+        function savePrompts() {
+            config.prompts.news = document.getElementById('news-prompt').value;
+            config.prompts.events = document.getElementById('events-prompt').value;
+            
+            localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
+            addLog('Prompts de IA guardados correctamente', 'success');
+            
+            alert('✅ Prompts guardados correctamente');
+        }
+
+        function exportConfig() {
+            const configJson = JSON.stringify(config, null, 2);
+            const blob = new Blob([configJson], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'config.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            addLog('Configuración exportada a config.json', 'success');
+        }
+
+        function importConfig() {
+            document.getElementById('config-file').click();
+        }
+
+        function handleConfigImport(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedConfig = JSON.parse(e.target.result);
+                        config = { ...config, ...importedConfig };
+                        localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
+                        loadConfig(); // Reload form fields
+                        addLog('Configuración importada correctamente', 'success');
+                        alert('✅ Configuración importada correctamente');
+                    } catch (error) {
+                        addLog('Error al importar configuración: ' + error.message, 'error');
+                        alert('❌ Error al importar configuración');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function resetConfig() {
+            if (confirm('¿Estás seguro de que quieres resetear toda la configuración?')) {
+                localStorage.removeItem('economicDashboardConfig');
+                config = {
+                    apiKeys: { finnhub: '', newsapi: '', openai: '' },
+                    rssUrls: ['https://feeds.reuters.com/reuters/businessNews'],
+                    prompts: {
+                        news: 'Analiza el impacto macroeconómico de esta noticia en 3 puntos clave',
+                        events: 'Analiza el impacto de este resultado en mercados'
+                    }
+                };
+                loadConfig();
+                addLog('Configuración reseteada', 'success');
+                alert('✅ Configuración reseteada correctamente');
+            }
+        }
+
+        // Logs functions
+        function loadLogs() {
+            const savedLogs = localStorage.getItem('economicDashboardLogs');
+            if (savedLogs) {
+                const logs = JSON.parse(savedLogs);
+                displayLogs(logs);
+            }
+        }
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleString('es-ES');
+            const logEntry = { timestamp, message, type };
+            
+            let logs = JSON.parse(localStorage.getItem('economicDashboardLogs') || '[]');
+            logs.unshift(logEntry); // Add to beginning
+            
+            // Keep only last 50 logs
+            if (logs.length > 50) {
+                logs = logs.slice(0, 50);
+            }
+            
+            localStorage.setItem('economicDashboardLogs', JSON.stringify(logs));
+            displayLogs(logs);
+        }
+
+        function displayLogs(logs) {
+            const container = document.getElementById('logs-container');
+            container.innerHTML = '';
+            
+            // Show only last 10 logs
+            const recentLogs = logs.slice(0, 10);
+            
+            recentLogs.forEach(log => {
+                const logDiv = document.createElement('div');
+                logDiv.className = `log-entry log-${log.type}`;
+                logDiv.innerHTML = `
+                    <span class="log-timestamp">[${log.timestamp}]</span>
+                    ${log.message}
+                `;
+                container.appendChild(logDiv);
+            });
+        }
+
+        function clearLogs() {
+            if (confirm('¿Estás seguro de que quieres limpiar todos los logs?')) {
+                localStorage.removeItem('economicDashboardLogs');
+                document.getElementById('logs-container').innerHTML = '<p style="color: var(--text-secondary);">No hay logs disponibles</p>';
+                addLog('Logs limpiados por el usuario', 'info');
+            }
+        }
+
+        function exportLogs() {
+            const logs = JSON.parse(localStorage.getItem('economicDashboardLogs') || '[]');
+            let logText = 'LOGS DEL DASHBOARD MACROECONÓMICO\n';
+            logText += '=====================================\n\n';
+            
+            logs.forEach(log => {
+                logText += `[${log.timestamp}] ${log.type.toUpperCase()}: ${log.message}\n`;
+            });
+            
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'logs.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            addLog('Logs exportados a logs.txt', 'success');
+        }
+
+        // Utility functions
+        function refreshCurrentSection() {
+            switch(currentSection) {
+                case 'news':
+                    refreshNews();
+                    break;
+                case 'calendar':
+                    refreshCalendar();
+                    break;
+                case 'reports':
+                    generateReports();
+                    break;
+                default:
+                    addLog('Sección actual no requiere actualización', 'info');
+            }
+        }
+
+        // Auto-refresh functionality (every 5 minutes for news)
+        setInterval(() => {
+            if (currentSection === 'news') {
+                refreshNews();
+                addLog('Auto-actualización de noticias', 'info');
+            }
+        }, 300000); // 5 minutes
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        showSection('news');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        showSection('calendar');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        showSection('reports');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        showSection('config');
+                        break;
+                    case '5':
+                        e.preventDefault();
+                        showSection('logs');
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        refreshCurrentSection();
+                        break;
+                }
+            }
+        });
+
+        // Add welcome message
+        setTimeout(() => {
+            addLog('¡Bienvenido al Dashboard Macroeconómico! Usa Ctrl+1-5 para navegar rápidamente', 'success');
+        }, 1000);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980b8d81a48fb8e3',t:'MTc1ODE0MzAzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
