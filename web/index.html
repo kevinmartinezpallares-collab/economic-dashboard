@@ -1384,532 +1384,478 @@
     </button>
 
     <script>
-        // Global variables
-        let currentSection = 'news';
-        let config = {
-            apiKeys: {
-                finnhub: '',
-                newsapi: '',
-                openai: ''
-            },
-            rssUrls: [
-                'https://feeds.reuters.com/reuters/businessNews',
-                'https://feeds.bloomberg.com/markets/news'
-            ],
+// Global variables
+let currentSection = 'news';
+let config = {
+    apiKeys: {
+        finnhub: '',
+        newsapi: '',
+        openai: ''
+    },
+    rssUrls: [
+        'https://feeds.reuters.com/reuters/businessNews',
+        'https://feeds.bloomberg.com/markets/news'
+    ],
+    prompts: {
+        news: 'Analiza el impacto macroeconómico de esta noticia en 3 puntos clave',
+        events: 'Analiza el impacto de este resultado en mercados'
+    }
+};
+
+// Initialize application
+document.addEventListener('DOMContentLoaded', function() {
+    loadTheme();
+    loadConfig();
+    loadLogs();
+    refreshNews();
+    refreshCalendar();
+    generateReports();
+    addLog('Sistema iniciado correctamente', 'success');
+});
+
+// Theme functions
+function loadTheme() {
+    const savedTheme = localStorage.getItem('economicDashboardTheme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('economicDashboardTheme', newTheme);
+    updateThemeIcon(newTheme);
+    addLog(`Tema cambiado a ${newTheme === 'dark' ? 'oscuro' : 'claro'}`, 'success');
+}
+
+function updateThemeIcon(theme) {
+    const themeIcon = document.getElementById('theme-icon');
+    themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+// Collapsible functions
+function toggleCollapsible(sectionId) {
+    const section = document.getElementById(sectionId);
+    section.classList.toggle('collapsed');
+    const isCollapsed = section.classList.contains('collapsed');
+    addLog(`Sección ${sectionId} ${isCollapsed ? 'contraída' : 'expandida'}`, 'info');
+}
+
+// Navigation functions
+function showSection(sectionName) {
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.getElementById(sectionName).classList.add('active');
+    event.target.classList.add('active');
+    currentSection = sectionName;
+}
+
+// News functions
+async function refreshNews() {
+    const loadingSpan = document.getElementById('news-loading');
+    loadingSpan.innerHTML = '<span class="loading"></span>';
+    addLog('Actualizando noticias...', 'info');
+
+    try {
+        const newsApiKey = localStorage.getItem('economicDashboardConfig') ? JSON.parse(localStorage.getItem('economicDashboardConfig')).apiKeys.newsapi : '';
+        if (!newsApiKey) {
+            throw new Error('NewsAPI key no configurada');
+        }
+        const response = await fetch(`https://cors-anywhere.herokuapp.com/https://newsapi.org/v2/everything?q=economy&sortBy=publishedAt&apiKey=${newsApiKey}`);
+        const data = await response.json();
+        if (data.status !== 'ok') {
+            throw new Error(data.message || 'Error en NewsAPI');
+        }
+        const newsData = data.articles.slice(0, 10).map(article => ({
+            title: article.title,
+            summary: article.description || 'Sin resumen disponible',
+            source: article.source.name,
+            publishedAt: article.publishedAt,
+            url: article.url,
+            aiAnalysis: 'Análisis pendiente (requiere OpenAI)', // OpenAI no implementado aún
+            highImpact: article.description?.includes('inflation') || article.title.includes('Fed') // Ejemplo de criterio
+        }));
+        displayNews(newsData);
+        // Enviar las primeras 3 noticias al webhook
+        newsData.slice(0, 3).forEach(news => sendToWebhook(news.title, news.url));
+        addLog('Noticias actualizadas correctamente', 'success');
+    } catch (error) {
+        addLog(`Error al actualizar noticias: ${error.message}`, 'error');
+    } finally {
+        loadingSpan.innerHTML = '';
+    }
+}
+
+function displayNews(newsData) {
+    const container = document.getElementById('news-container');
+    container.innerHTML = '';
+    newsData.forEach(news => {
+        const newsCard = document.createElement('div');
+        newsCard.className = `glass-card news-card ${news.highImpact ? 'high-impact' : ''}`;
+        const publishedDate = new Date(news.publishedAt).toLocaleString('es-ES');
+        newsCard.innerHTML = `
+            <div class="news-title">${news.title}</div>
+            <div class="news-meta">
+                <span>📰 ${news.source}</span>
+                <span>🕒 ${publishedDate}</span>
+            </div>
+            <div class="news-summary">${news.summary}</div>
+            <div class="ai-analysis">
+                🤖 ${news.aiAnalysis}
+            </div>
+            <div style="margin-top: 1rem;">
+                <a href="${news.url}" target="_blank" class="btn" style="text-decoration: none; display: inline-block;">
+                    Leer más 🔗
+                </a>
+            </div>
+        `;
+        container.appendChild(newsCard);
+    });
+}
+
+// Calendar functions
+async function refreshCalendar() {
+    const loadingSpan = document.getElementById('calendar-loading');
+    loadingSpan.innerHTML = '<span class="loading"></span>';
+    addLog('Actualizando calendario económico...', 'info');
+
+    try {
+        const finnhubKey = localStorage.getItem('economicDashboardConfig') ? JSON.parse(localStorage.getItem('economicDashboardConfig')).apiKeys.finnhub : '';
+        if (!finnhubKey) {
+            throw new Error('Finnhub key no configurada');
+        }
+        const response = await fetch(`https://finnhub.io/api/v1/calendar/economic?token=${finnhubKey}`);
+        const data = await response.json();
+        if (!data.economicCalendar) {
+            throw new Error('Error en Finnhub: ' + (data.error || 'Respuesta inválida'));
+        }
+        const calendarData = data.economicCalendar.slice(0, 10).map(event => ({
+            event: event.event,
+            time: event.date,
+            impact: event.impact || 'medium',
+            expected: event.estimate || 'N/A',
+            actual: event.actual || ''
+        }));
+        displayCalendar(calendarData);
+        addLog('Calendario actualizado correctamente', 'success');
+    } catch (error) {
+        addLog(`Error al actualizar calendario: ${error.message}`, 'error');
+    } finally {
+        loadingSpan.innerHTML = '';
+    }
+}
+
+function displayCalendar(calendarData) {
+    const tbody = document.getElementById('calendar-body');
+    tbody.innerHTML = '';
+    calendarData.forEach(event => {
+        const row = document.createElement('tr');
+        const eventTime = new Date(event.time).toLocaleString('es-ES');
+        const impactConfig = {
+            'high': { class: 'status-offline', text: 'Alto' },
+            'medium': { class: 'status-warning', text: 'Medio' },
+            'low': { class: 'status-online', text: 'Bajo' }
+        }[event.impact];
+        row.innerHTML = `
+            <td><strong>${event.event}</strong></td>
+            <td>${eventTime}</td>
+            <td class="impact-${event.impact}">
+                <span class="status-indicator ${impactConfig.class}" title="Impacto ${impactConfig.text}"></span>
+                ${impactConfig.text}
+            </td>
+            <td>${event.expected}</td>
+            <td>${event.actual || '⏳ Pendiente'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Webhook function
+async function sendToWebhook(title, url) {
+    const iftttKey = 'TU_IFTTT_KEY'; // Reemplaza con tu key de IFTTT
+    const eventName = 'macro_news';
+    try {
+        await fetch(`https://maker.ifttt.com/trigger/${eventName}/with/key/${iftttKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value1: `${title} - ${url}` })
+        });
+        addLog(`Noticia enviada a Discord: ${title}`, 'success');
+    } catch (error) {
+        addLog(`Error al enviar webhook: ${error.message}`, 'error');
+    }
+}
+
+// Reports functions (manteniendo mock por ahora)
+function generateReports() {
+    const loadingSpan = document.getElementById('reports-loading');
+    loadingSpan.innerHTML = '<span class="loading"></span>';
+    addLog('Generando reportes...', 'info');
+    setTimeout(() => {
+        generateDailyReport();
+        generateWeeklyReport();
+        loadingSpan.innerHTML = '';
+        addLog('Reportes generados correctamente', 'success');
+    }, 3000);
+}
+
+function generateDailyReport() {
+    const dailyReport = document.getElementById('daily-report');
+    const today = new Date().toLocaleDateString('es-ES');
+    dailyReport.innerHTML = `
+        <p><strong>📅 Reporte del ${today}</strong></p>
+        <ul>
+            <li><strong>Fed mantiene tasas:</strong> Decisión esperada que mantiene estabilidad en mercados de renta fija.</li>
+            <li><strong>Inflación Eurozona:</strong> Dato superior a expectativas genera presión en bonos europeos.</li>
+            <li><strong>Fortaleza del dólar:</strong> USD se mantiene fuerte ante datos mixtos globales.</li>
+            <li><strong>Commodities:</strong> Oro estable, petróleo con leve alza por tensiones geopolíticas.</li>
+        </ul>
+        <p><em>🤖 Análisis generado por IA basado en noticias del día</em></p>
+    `;
+}
+
+function generateWeeklyReport() {
+    const weeklyReport = document.getElementById('weekly-report');
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - 7);
+    weeklyReport.innerHTML = `
+        <p><strong>📊 Resumen Semanal (${weekStart.toLocaleDateString('es-ES')} - ${new Date().toLocaleDateString('es-ES')})</strong></p>
+        <ul>
+            <li><strong>Política Monetaria:</strong> Bancos centrales mantienen postura cautelosa ante datos inflacionarios mixtos.</li>
+            <li><strong>Crecimiento Global:</strong> Señales de desaceleración en Europa, estabilidad en EEUU.</li>
+            <li><strong>Mercados Emergentes:</strong> Flujos positivos hacia Asia, cautela en Latinoamérica.</li>
+            <li><strong>Sectores Destacados:</strong> Tecnología resiliente, energía volátil por factores geopolíticos.</li>
+            <li><strong>Outlook:</strong> Semana próxima clave con datos de empleo EEUU y decisiones BCE.</li>
+        </ul>
+        <p><em>🤖 Resumen semanal generado por IA</em></p>
+    `;
+}
+
+// Configuration functions
+function loadConfig() {
+    const savedConfig = localStorage.getItem('economicDashboardConfig');
+    if (savedConfig) {
+        config = { ...config, ...JSON.parse(savedConfig) };
+        document.getElementById('finnhub-key').value = config.apiKeys.finnhub;
+        document.getElementById('newsapi-key').value = config.apiKeys.newsapi;
+        document.getElementById('openai-key').value = config.apiKeys.openai;
+        document.getElementById('rss-urls').value = config.rssUrls.join('\n');
+        document.getElementById('news-prompt').value = config.prompts.news;
+        document.getElementById('events-prompt').value = config.prompts.events;
+    }
+}
+
+function saveApiKeys() {
+    config.apiKeys.finnhub = document.getElementById('finnhub-key').value;
+    config.apiKeys.newsapi = document.getElementById('newsapi-key').value;
+    config.apiKeys.openai = document.getElementById('openai-key').value;
+    localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
+    addLog('API Keys guardadas correctamente', 'success');
+    alert('✅ API Keys guardadas correctamente');
+}
+
+function saveRssUrls() {
+    const urls = document.getElementById('rss-urls').value.split('\n').filter(url => url.trim());
+    config.rssUrls = urls;
+    localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
+    addLog(`${urls.length} URLs RSS guardadas`, 'success');
+    alert('✅ URLs RSS guardadas correctamente');
+}
+
+function savePrompts() {
+    config.prompts.news = document.getElementById('news-prompt').value;
+    config.prompts.events = document.getElementById('events-prompt').value;
+    localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
+    addLog('Prompts de IA guardados correctamente', 'success');
+    alert('✅ Prompts guardados correctamente');
+}
+
+function exportConfig() {
+    const configJson = JSON.stringify(config, null, 2);
+    const blob = new Blob([configJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'config.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    addLog('Configuración exportada a config.json', 'success');
+}
+
+function importConfig() {
+    document.getElementById('config-file').click();
+}
+
+function handleConfigImport(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedConfig = JSON.parse(e.target.result);
+                config = { ...config, ...importedConfig };
+                localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
+                loadConfig();
+                addLog('Configuración importada correctamente', 'success');
+                alert('✅ Configuración importada correctamente');
+            } catch (error) {
+                addLog('Error al importar configuración: ' + error.message, 'error');
+                alert('❌ Error al importar configuración');
+            }
+        };
+        reader.readAsText(file);
+    }
+}
+
+function resetConfig() {
+    if (confirm('¿Estás seguro de que quieres resetear toda la configuración?')) {
+        localStorage.removeItem('economicDashboardConfig');
+        config = {
+            apiKeys: { finnhub: '', newsapi: '', openai: '' },
+            rssUrls: ['https://feeds.reuters.com/reuters/businessNews'],
             prompts: {
                 news: 'Analiza el impacto macroeconómico de esta noticia en 3 puntos clave',
                 events: 'Analiza el impacto de este resultado en mercados'
             }
         };
+        loadConfig();
+        addLog('Configuración reseteada', 'success');
+        alert('✅ Configuración reseteada correctamente');
+    }
+}
 
-        // Mock data for demonstration
-        const mockNews = [
-            {
-                title: "Fed mantiene tasas de interés sin cambios",
-                summary: "La Reserva Federal decidió mantener las tasas de interés en el rango actual de 5.25%-5.50%, citando preocupaciones sobre la inflación persistente.",
-                source: "Reuters",
-                publishedAt: "2024-01-15T14:30:00Z",
-                url: "https://example.com/news1",
-                aiAnalysis: "AI: Impacto neutral en USD a corto plazo. Mercados esperaban esta decisión. Atención en próximas declaraciones de Powell.",
-                highImpact: true
-            },
-            {
-                title: "Inflación en Eurozona supera expectativas",
-                summary: "Los datos de inflación de diciembre muestran un aumento del 2.9% interanual, superando las expectativas del 2.7%.",
-                source: "Bloomberg",
-                publishedAt: "2024-01-15T12:00:00Z",
-                url: "https://example.com/news2",
-                aiAnalysis: "AI: Presión alcista en EUR. BCE podría reconsiderar política monetaria. Sectores energéticos bajo presión.",
-                highImpact: true
-            },
-            {
-                title: "PIB de China crece 5.2% en 2023",
-                summary: "La economía china logró su objetivo de crecimiento del 5% para 2023, impulsada por el consumo interno y las exportaciones.",
-                source: "Financial Times",
-                publishedAt: "2024-01-15T10:15:00Z",
-                url: "https://example.com/news3",
-                aiAnalysis: "AI: Fortaleza en commodities. Impacto positivo en mercados emergentes. Atención a políticas de estímulo 2024.",
-                highImpact: false
-            }
-        ];
+// Logs functions
+function loadLogs() {
+    const savedLogs = localStorage.getItem('economicDashboardLogs');
+    if (savedLogs) {
+        const logs = JSON.parse(savedLogs);
+        displayLogs(logs);
+    }
+}
 
-        const mockCalendar = [
-            {
-                event: "Decisión de Tasas Fed",
-                time: "2024-01-17T19:00:00Z",
-                impact: "high",
-                expected: "5.50%",
-                actual: ""
-            },
-            {
-                event: "IPC Estados Unidos",
-                time: "2024-01-18T13:30:00Z",
-                impact: "high",
-                expected: "3.2%",
-                actual: ""
-            },
-            {
-                event: "PMI Manufacturero Eurozona",
-                time: "2024-01-19T09:00:00Z",
-                impact: "medium",
-                expected: "47.2",
-                actual: "47.9"
-            },
-            {
-                event: "Ventas Minoristas Reino Unido",
-                time: "2024-01-20T09:30:00Z",
-                impact: "low",
-                expected: "0.3%",
-                actual: ""
-            }
-        ];
+function addLog(message, type = 'info') {
+    const timestamp = new Date().toLocaleString('es-ES');
+    const logEntry = { timestamp, message, type };
+    let logs = JSON.parse(localStorage.getItem('economicDashboardLogs') || '[]');
+    logs.unshift(logEntry);
+    if (logs.length > 50) {
+        logs = logs.slice(0, 50);
+    }
+    localStorage.setItem('economicDashboardLogs', JSON.stringify(logs));
+    displayLogs(logs);
+}
 
-        // Initialize application
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTheme();
-            loadConfig();
-            loadLogs();
+function displayLogs(logs) {
+    const container = document.getElementById('logs-container');
+    container.innerHTML = '';
+    const recentLogs = logs.slice(0, 10);
+    recentLogs.forEach(log => {
+        const logDiv = document.createElement('div');
+        logDiv.className = `log-entry log-${log.type}`;
+        logDiv.innerHTML = `
+            <span class="log-timestamp">[${log.timestamp}]</span>
+            ${log.message}
+        `;
+        container.appendChild(logDiv);
+    });
+}
+
+function clearLogs() {
+    if (confirm('¿Estás seguro de que quieres limpiar todos los logs?')) {
+        localStorage.removeItem('economicDashboardLogs');
+        document.getElementById('logs-container').innerHTML = '<p style="color: var(--text-secondary);">No hay logs disponibles</p>';
+        addLog('Logs limpiados por el usuario', 'info');
+    }
+}
+
+function exportLogs() {
+    const logs = JSON.parse(localStorage.getItem('economicDashboardLogs') || '[]');
+    let logText = 'LOGS DEL DASHBOARD MACROECONÓMICO\n';
+    logText += '=====================================\n\n';
+    logs.forEach(log => {
+        logText += `[${log.timestamp}] ${log.type.toUpperCase()}: ${log.message}\n`;
+    });
+    const blob = new Blob([logText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'logs.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    addLog('Logs exportados a logs.txt', 'success');
+}
+
+// Utility functions
+function refreshCurrentSection() {
+    switch(currentSection) {
+        case 'news':
             refreshNews();
+            break;
+        case 'calendar':
             refreshCalendar();
+            break;
+        case 'reports':
             generateReports();
-            addLog('Sistema iniciado correctamente', 'success');
-        });
+            break;
+        default:
+            addLog('Sección actual no requiere actualización', 'info');
+    }
+}
 
-        // Theme functions
-        function loadTheme() {
-            const savedTheme = localStorage.getItem('economicDashboardTheme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            updateThemeIcon(savedTheme);
+// Auto-refresh functionality
+setInterval(() => {
+    if (currentSection === 'news') {
+        refreshNews();
+        addLog('Auto-actualización de noticias', 'info');
+    }
+}, 300000); // 5 minutes
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case '1':
+                e.preventDefault();
+                showSection('news');
+                break;
+            case '2':
+                e.preventDefault();
+                showSection('calendar');
+                break;
+            case '3':
+                e.preventDefault();
+                showSection('reports');
+                break;
+            case '4':
+                e.preventDefault();
+                showSection('config');
+                break;
+            case '5':
+                e.preventDefault();
+                showSection('logs');
+                break;
+            case 'r':
+                e.preventDefault();
+                refreshCurrentSection();
+                break;
         }
+    }
+});
 
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('economicDashboardTheme', newTheme);
-            updateThemeIcon(newTheme);
-            
-            addLog(`Tema cambiado a ${newTheme === 'dark' ? 'oscuro' : 'claro'}`, 'success');
-        }
-
-        function updateThemeIcon(theme) {
-            const themeIcon = document.getElementById('theme-icon');
-            themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-        }
-
-        // Collapsible functions
-        function toggleCollapsible(sectionId) {
-            const section = document.getElementById(sectionId);
-            section.classList.toggle('collapsed');
-            
-            const isCollapsed = section.classList.contains('collapsed');
-            addLog(`Sección ${sectionId} ${isCollapsed ? 'contraída' : 'expandida'}`, 'info');
-        }
-
-        // Navigation functions
-        function showSection(sectionName) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Remove active class from all tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected section
-            document.getElementById(sectionName).classList.add('active');
-            
-            // Add active class to selected tab
-            event.target.classList.add('active');
-            
-            currentSection = sectionName;
-        }
-
-        // News functions
-        function refreshNews() {
-            const loadingSpan = document.getElementById('news-loading');
-            loadingSpan.innerHTML = '<span class="loading"></span>';
-            
-            addLog('Actualizando noticias...', 'info');
-            
-            // Simulate API call delay
-            setTimeout(() => {
-                displayNews(mockNews);
-                loadingSpan.innerHTML = '';
-                addLog('Noticias actualizadas correctamente', 'success');
-            }, 2000);
-        }
-
-        function displayNews(newsData) {
-            const container = document.getElementById('news-container');
-            container.innerHTML = '';
-            
-            newsData.forEach(news => {
-                const newsCard = document.createElement('div');
-                newsCard.className = `glass-card news-card ${news.highImpact ? 'high-impact' : ''}`;
-                
-                const publishedDate = new Date(news.publishedAt).toLocaleString('es-ES');
-                
-                newsCard.innerHTML = `
-                    <div class="news-title">${news.title}</div>
-                    <div class="news-meta">
-                        <span>📰 ${news.source}</span>
-                        <span>🕒 ${publishedDate}</span>
-                    </div>
-                    <div class="news-summary">${news.summary}</div>
-                    <div class="ai-analysis">
-                        🤖 ${news.aiAnalysis}
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        <a href="${news.url}" target="_blank" class="btn" style="text-decoration: none; display: inline-block;">
-                            Leer más 🔗
-                        </a>
-                    </div>
-                `;
-                
-                container.appendChild(newsCard);
-            });
-        }
-
-        // Calendar functions
-        function refreshCalendar() {
-            const loadingSpan = document.getElementById('calendar-loading');
-            loadingSpan.innerHTML = '<span class="loading"></span>';
-            
-            addLog('Actualizando calendario económico...', 'info');
-            
-            // Simulate API call delay
-            setTimeout(() => {
-                displayCalendar(mockCalendar);
-                loadingSpan.innerHTML = '';
-                addLog('Calendario actualizado correctamente', 'success');
-            }, 1500);
-        }
-
-        function displayCalendar(calendarData) {
-            const tbody = document.getElementById('calendar-body');
-            tbody.innerHTML = '';
-            
-            calendarData.forEach(event => {
-                const row = document.createElement('tr');
-                
-                const eventTime = new Date(event.time).toLocaleString('es-ES');
-                const impactConfig = {
-                    'high': { class: 'status-offline', text: 'Alto' },
-                    'medium': { class: 'status-warning', text: 'Medio' },
-                    'low': { class: 'status-online', text: 'Bajo' }
-                }[event.impact];
-                
-                row.innerHTML = `
-                    <td><strong>${event.event}</strong></td>
-                    <td>${eventTime}</td>
-                    <td class="impact-${event.impact}">
-                        <span class="status-indicator ${impactConfig.class}" title="Impacto ${impactConfig.text}"></span>
-                        ${impactConfig.text}
-                    </td>
-                    <td>${event.expected}</td>
-                    <td>${event.actual || '⏳ Pendiente'}</td>
-                `;
-                
-                tbody.appendChild(row);
-            });
-        }
-
-        // Reports functions
-        function generateReports() {
-            const loadingSpan = document.getElementById('reports-loading');
-            loadingSpan.innerHTML = '<span class="loading"></span>';
-            
-            addLog('Generando reportes...', 'info');
-            
-            // Simulate AI analysis delay
-            setTimeout(() => {
-                generateDailyReport();
-                generateWeeklyReport();
-                loadingSpan.innerHTML = '';
-                addLog('Reportes generados correctamente', 'success');
-            }, 3000);
-        }
-
-        function generateDailyReport() {
-            const dailyReport = document.getElementById('daily-report');
-            const today = new Date().toLocaleDateString('es-ES');
-            
-            dailyReport.innerHTML = `
-                <p><strong>📅 Reporte del ${today}</strong></p>
-                <ul>
-                    <li><strong>Fed mantiene tasas:</strong> Decisión esperada que mantiene estabilidad en mercados de renta fija.</li>
-                    <li><strong>Inflación Eurozona:</strong> Dato superior a expectativas genera presión en bonos europeos.</li>
-                    <li><strong>Fortaleza del dólar:</strong> USD se mantiene fuerte ante datos mixtos globales.</li>
-                    <li><strong>Commodities:</strong> Oro estable, petróleo con leve alza por tensiones geopolíticas.</li>
-                </ul>
-                <p><em>🤖 Análisis generado por IA basado en noticias del día</em></p>
-            `;
-        }
-
-        function generateWeeklyReport() {
-            const weeklyReport = document.getElementById('weekly-report');
-            const weekStart = new Date();
-            weekStart.setDate(weekStart.getDate() - 7);
-            
-            weeklyReport.innerHTML = `
-                <p><strong>📊 Resumen Semanal (${weekStart.toLocaleDateString('es-ES')} - ${new Date().toLocaleDateString('es-ES')})</strong></p>
-                <ul>
-                    <li><strong>Política Monetaria:</strong> Bancos centrales mantienen postura cautelosa ante datos inflacionarios mixtos.</li>
-                    <li><strong>Crecimiento Global:</strong> Señales de desaceleración en Europa, estabilidad en EEUU.</li>
-                    <li><strong>Mercados Emergentes:</strong> Flujos positivos hacia Asia, cautela en Latinoamérica.</li>
-                    <li><strong>Sectores Destacados:</strong> Tecnología resiliente, energía volátil por factores geopolíticos.</li>
-                    <li><strong>Outlook:</strong> Semana próxima clave con datos de empleo EEUU y decisiones BCE.</li>
-                </ul>
-                <p><em>🤖 Resumen semanal generado por IA</em></p>
-            `;
-        }
-
-        // Configuration functions
-        function loadConfig() {
-            const savedConfig = localStorage.getItem('economicDashboardConfig');
-            if (savedConfig) {
-                config = { ...config, ...JSON.parse(savedConfig) };
-                
-                // Populate form fields
-                document.getElementById('finnhub-key').value = config.apiKeys.finnhub;
-                document.getElementById('newsapi-key').value = config.apiKeys.newsapi;
-                document.getElementById('openai-key').value = config.apiKeys.openai;
-                document.getElementById('rss-urls').value = config.rssUrls.join('\n');
-                document.getElementById('news-prompt').value = config.prompts.news;
-                document.getElementById('events-prompt').value = config.prompts.events;
-            }
-        }
-
-        function saveApiKeys() {
-            config.apiKeys.finnhub = document.getElementById('finnhub-key').value;
-            config.apiKeys.newsapi = document.getElementById('newsapi-key').value;
-            config.apiKeys.openai = document.getElementById('openai-key').value;
-            
-            localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
-            addLog('API Keys guardadas correctamente', 'success');
-            
-            // Show success feedback
-            alert('✅ API Keys guardadas correctamente');
-        }
-
-        function saveRssUrls() {
-            const urls = document.getElementById('rss-urls').value.split('\n').filter(url => url.trim());
-            config.rssUrls = urls;
-            
-            localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
-            addLog(`${urls.length} URLs RSS guardadas`, 'success');
-            
-            alert('✅ URLs RSS guardadas correctamente');
-        }
-
-        function savePrompts() {
-            config.prompts.news = document.getElementById('news-prompt').value;
-            config.prompts.events = document.getElementById('events-prompt').value;
-            
-            localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
-            addLog('Prompts de IA guardados correctamente', 'success');
-            
-            alert('✅ Prompts guardados correctamente');
-        }
-
-        function exportConfig() {
-            const configJson = JSON.stringify(config, null, 2);
-            const blob = new Blob([configJson], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'config.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            addLog('Configuración exportada a config.json', 'success');
-        }
-
-        function importConfig() {
-            document.getElementById('config-file').click();
-        }
-
-        function handleConfigImport(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const importedConfig = JSON.parse(e.target.result);
-                        config = { ...config, ...importedConfig };
-                        localStorage.setItem('economicDashboardConfig', JSON.stringify(config));
-                        loadConfig(); // Reload form fields
-                        addLog('Configuración importada correctamente', 'success');
-                        alert('✅ Configuración importada correctamente');
-                    } catch (error) {
-                        addLog('Error al importar configuración: ' + error.message, 'error');
-                        alert('❌ Error al importar configuración');
-                    }
-                };
-                reader.readAsText(file);
-            }
-        }
-
-        function resetConfig() {
-            if (confirm('¿Estás seguro de que quieres resetear toda la configuración?')) {
-                localStorage.removeItem('economicDashboardConfig');
-                config = {
-                    apiKeys: { finnhub: '', newsapi: '', openai: '' },
-                    rssUrls: ['https://feeds.reuters.com/reuters/businessNews'],
-                    prompts: {
-                        news: 'Analiza el impacto macroeconómico de esta noticia en 3 puntos clave',
-                        events: 'Analiza el impacto de este resultado en mercados'
-                    }
-                };
-                loadConfig();
-                addLog('Configuración reseteada', 'success');
-                alert('✅ Configuración reseteada correctamente');
-            }
-        }
-
-        // Logs functions
-        function loadLogs() {
-            const savedLogs = localStorage.getItem('economicDashboardLogs');
-            if (savedLogs) {
-                const logs = JSON.parse(savedLogs);
-                displayLogs(logs);
-            }
-        }
-
-        function addLog(message, type = 'info') {
-            const timestamp = new Date().toLocaleString('es-ES');
-            const logEntry = { timestamp, message, type };
-            
-            let logs = JSON.parse(localStorage.getItem('economicDashboardLogs') || '[]');
-            logs.unshift(logEntry); // Add to beginning
-            
-            // Keep only last 50 logs
-            if (logs.length > 50) {
-                logs = logs.slice(0, 50);
-            }
-            
-            localStorage.setItem('economicDashboardLogs', JSON.stringify(logs));
-            displayLogs(logs);
-        }
-
-        function displayLogs(logs) {
-            const container = document.getElementById('logs-container');
-            container.innerHTML = '';
-            
-            // Show only last 10 logs
-            const recentLogs = logs.slice(0, 10);
-            
-            recentLogs.forEach(log => {
-                const logDiv = document.createElement('div');
-                logDiv.className = `log-entry log-${log.type}`;
-                logDiv.innerHTML = `
-                    <span class="log-timestamp">[${log.timestamp}]</span>
-                    ${log.message}
-                `;
-                container.appendChild(logDiv);
-            });
-        }
-
-        function clearLogs() {
-            if (confirm('¿Estás seguro de que quieres limpiar todos los logs?')) {
-                localStorage.removeItem('economicDashboardLogs');
-                document.getElementById('logs-container').innerHTML = '<p style="color: var(--text-secondary);">No hay logs disponibles</p>';
-                addLog('Logs limpiados por el usuario', 'info');
-            }
-        }
-
-        function exportLogs() {
-            const logs = JSON.parse(localStorage.getItem('economicDashboardLogs') || '[]');
-            let logText = 'LOGS DEL DASHBOARD MACROECONÓMICO\n';
-            logText += '=====================================\n\n';
-            
-            logs.forEach(log => {
-                logText += `[${log.timestamp}] ${log.type.toUpperCase()}: ${log.message}\n`;
-            });
-            
-            const blob = new Blob([logText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'logs.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            addLog('Logs exportados a logs.txt', 'success');
-        }
-
-        // Utility functions
-        function refreshCurrentSection() {
-            switch(currentSection) {
-                case 'news':
-                    refreshNews();
-                    break;
-                case 'calendar':
-                    refreshCalendar();
-                    break;
-                case 'reports':
-                    generateReports();
-                    break;
-                default:
-                    addLog('Sección actual no requiere actualización', 'info');
-            }
-        }
-
-        // Auto-refresh functionality (every 5 minutes for news)
-        setInterval(() => {
-            if (currentSection === 'news') {
-                refreshNews();
-                addLog('Auto-actualización de noticias', 'info');
-            }
-        }, 300000); // 5 minutes
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey || e.metaKey) {
-                switch(e.key) {
-                    case '1':
-                        e.preventDefault();
-                        showSection('news');
-                        break;
-                    case '2':
-                        e.preventDefault();
-                        showSection('calendar');
-                        break;
-                    case '3':
-                        e.preventDefault();
-                        showSection('reports');
-                        break;
-                    case '4':
-                        e.preventDefault();
-                        showSection('config');
-                        break;
-                    case '5':
-                        e.preventDefault();
-                        showSection('logs');
-                        break;
-                    case 'r':
-                        e.preventDefault();
-                        refreshCurrentSection();
-                        break;
-                }
-            }
-        });
-
-        // Add welcome message
-        setTimeout(() => {
-            addLog('¡Bienvenido al Dashboard Macroeconómico! Usa Ctrl+1-5 para navegar rápidamente', 'success');
-        }, 1000);
-    </script>
+// Add welcome message
+setTimeout(() => {
+    addLog('¡Bienvenido al Dashboard Macroeconómico! Usa Ctrl+1-5 para navegar rápidamente', 'success');
+}, 1000);
+</script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'980b8d81a48fb8e3',t:'MTc1ODE0MzAzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
 
